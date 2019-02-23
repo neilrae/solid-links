@@ -9,11 +9,11 @@ The app has the following dependencies:
 * Vue.js: to provide simple html component templates, data binding and an event bus
 * Material Design Components for CSS, icons, fonts and Vue.js
 * Solid-auth: for user ID management
-* Axios: to simplify handling of vanilla https requests
+* Axios: to simplify handling of https requests
 
 Material was chosen as it gives a familiar, responsive user experience and has a broad set of coherent components, icons, etc
 Vue was chosen as a front end framework as it is relatively simple and easy to reason with - its architecture is very similar to vanilla web components.
-Axios was chosen as a way to simply handle vanilla https requests asynchronously.
+Axios was chosen as a way to simply handle https requests asynchronously.
 Solid Auth was used to illustrate simple user login. This isn't used to do much more than display the user in the app at present. 
 
 It is normally good practice to write the code for individual components in separate files and to combine these later using a tool, such as webpack. This app is deliberately minimal and all the components are in a single file so that it can be read as one document and easily followed.  The only additions are the manifest.json and serviceworker.js files that enable it to be a Progressive Web App,as well as the underlying data.
