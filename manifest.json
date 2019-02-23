@@ -1,0 +1,17 @@
+{
+  "name" : "Solid Links",
+  "short_name" : "SolidLinks",
+  "start_url" : "https://neilrae.solid.community/public/apps/solid_links/",
+  "display" : "standalone",
+  "background_color" :"#4A00A5",
+  "description" : "A demo app using Material Design on a Solid Pod",
+  "theme_color" : "#4A00A5",
+  "lang" : "English",
+  "orientation" : "any",
+  "icons" : [
+    {
+      "src": "https://neilrae.solid.community/public/apps/solid_links//solid_icon.svg",
+      "sizes": "512x512"
+    }
+  ]
+}
