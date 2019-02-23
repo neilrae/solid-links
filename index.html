@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <title>Solid Links</title>
+    <!-- Setup for a mobile friendly progressive web app - service worker is registered towards the bottom of the document -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#6746EE"/>
+    <link rel="manifest" href="https://neilrae.solid.community/public/apps/solid_links/manifest.js" />
+    <link rel="icon" type="image/svg" href="https://neilrae.solid.community/public/apps/solid_links//solid_logo.png" sizes="512x512" />
+    <!-- Import reset and material fonts and icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/7.0.0/normalize.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500" type="text/css">
+    <!-- Import javascript libraries - vue.js for component HTML templates and data binding, axios.js for simple Ajax calls, vue-mdc for Material Design components and solid-auth-client for user authentication -->
+    <script src="https://unpkg.com/vue"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://unpkg.com/vue-mdc-adapter"></script>
+    <script src="https://solid.github.io/solid-auth-client/dist/solid-auth-client.bundle.js"></script>
+    <script src="https://solid.github.io/query-ldflex/dist/solid-query-ldflex.bundle.js"></script>
+
+
+    <!-- Basic CSS to decorate Material Design elements-->
+    <style>
+      a { text-decoration: none; }
+      .my-app { background: lightgray; }
+      .mdc-toolbar { background: #4A00A5; }
+      .my-card { height: auto; width: 85%; margin: auto; margin-top: 10px; margin-bottom: 10px; }
+      .form-field { margin: 10px; }
+      .tag { vertical-align: middle; color: gray; }
+    </style>
+  </head>
+
+  <body>
+
+    <!-- App layout ---------------------------------------------------------------------------->
+    <div id="app">
+      <mdc-layout-app class="my-app">
+
+        <!-- Toolbar ----------------------------------------------------------------------------->
+        <mdc-toolbar slot="toolbar" fixed>
+          <mdc-toolbar-row>
+            <mdc-toolbar-section align-start >
+              <mdc-toolbar-menu-icon event="toggle-drawer"></mdc-toolbar-menu-icon>
+              <mdc-toolbar-title>Solid Links</mdc-toolbar-title>
+            </mdc-toolbar-section>
+          </mdc-toolbar-row>
+        </mdc-toolbar>
+
+        <!-- Side Drawer -------------------------------------------------------------------------->
+        <mdc-drawer slot="drawer" toggle-on="toggle-drawer">
+          <mdc-drawer-list>
+            <mdc-drawer-item start-icon="face">User: {{ user }}</mdc-drawer-item>
+            <mdc-drawer-item start-icon="local_offer">Filter:</mdc-drawer-item>
+
+            <filter-item
+              v-for="tag in tagFilter"
+              v-bind:tag="tag"
+              :key="tag+1">
+            </filter-item>
+
+            <mdc-drawer-item start-icon="local_offer">Tags:</mdc-drawer-item>
+            <tag-item
+              v-for="result in filteredTagList"
+              v-bind:tag="result"
+              v-bind:documents="documentList"
+              :key="result">
+            </tag-item>
+          </mdc-drawer-list>
+        </mdc-drawer>
+
+        <!-- Main Content Area ---------------------------------------------------------------------->
+        <main class="content" >
+
+          <document-item
+            v-for="item in filteredDocumentList"
+            v-bind:document="item"
+            v-bind:taglist="tagList"
+            :key="item.id">
+          </document-item>
+
+          </main>
+        </mdc-layout-app>
+      </div>
+
+    <!-- Card Template ----------------------------------------------------------------------------->
+    <script type="text/x-template" id="card-template">
+      <mdc-card class="my-card" :id="document.doc._id">
+        <a :href="document.doc.url">
+          <mdc-card-header :title="document.doc.title" />
+        </a>
+
+        <mdc-body>
+          <mdc-card-text v-html="document.doc.description">
+
+          </mdc-card-text>
+          <mdc-layout-grid>
+            <mdc-layout-cell class="tag" span="2" align="middle">Tags:</mdc-layout-cell>
+            <mdc-layout-cell class="tag" span="2" align="middle" v-for="item in document.doc.tags" :key="item">
+              <a @click="$bus.$emit('add-filter', item)">
+                {{ item }}
+              </a>
+            </mdc-layout-cell>
+          </mdc-layout-grid>
+        </mdc-body>
+
+      </mdc-card>
+    </script>
+
+    <!-- Filter Item Template ----------------------------------------------------------------------------->
+    <script type="text/x-template" id="filter-item-template">
+      <mdc-drawer-item start-icon="clear" @click="$bus.$emit('remove-filter', tag)">
+        {{ tag }}
+      </mdc-drawer-item>
+    </script>
+
+    <!-- Tag Item Template ----------------------------------------------------------------------------->
+    <script type="text/x-template" id="tag-item-template">
+      <mdc-drawer-item start-icon="navigate_next" @click="$bus.$emit('add-filter', tag)">
+        {{ tag }}
+      </mdc-drawer-item>
+    </script>
+
+    <!-- Main Vue Script ----------------------------------------------------------------------------->
+    <script>
+
+      // Initialise Vue's event bus that lets events in components, like clicking a tag, be globally shared
+      const EventBus = new Vue()
+      Object.defineProperties(Vue.prototype, {
+        $bus: {
+          get: function () {
+            return EventBus
+          }
+        }
+      })
+
+      // This component is used in the sidebar to display tags that have been selected to filter the list of links
+      Vue.component('filter-item',{
+        props: {
+          tag: String
+        },
+        template: '#filter-item-template',
+      })
+
+      // This component is used in the sidebar to display tags that can be selected to filter the list of links
+      Vue.component('tag-item', {
+        props: {
+          tag: String
+        },
+        template: '#tag-item-template'
+      })
+
+      // This component is used in the main display area to provide a card for each link and its meta-data
+      Vue.component('document-item', {
+        props: [
+          'document',
+          'taglist'
+        ],
+        template: '#card-template'
+      })
+
+      // Declares main Vue application - lists primary app data and methods
+      var app = new Vue({
+        el: '#app',
+        data () {
+          return {
+            documentList: [],
+            tagList: [],
+            tagIndex: {},
+            tagFilter: [],
+            open: false,
+            user: ''
+          }
+        },
+        // On load, the app makes an https request to load two sets of data - the list of JSON documents that hold the individual links and metadata, and an object that provides an tag index to the JSON objects and other tags.  This is used to derive a simple array that is a list of the tags
+        mounted () {
+          axios.get('https://neilrae.solid.community/public/apps/solid_links/docs.json').then(response => {
+            this.documentList = response.data.rows;
+          }).catch(function (err) {
+            console.log(err);
+          });
+
+          axios.get('https://neilrae.solid.community/public/apps/solid_links/index.json').then(response => {
+            this.tagIndex = response.data;
+            this.tagList = Object.keys(this.tagIndex);
+          }).catch(function (err) {
+            console.log(err);
+          });
+        },
+        // This updates primary app data when events occur
+       created () {
+         this.$bus.$on('add-filter', ($event) => {
+           this.tagFilter.push($event);
+         });
+         this.$bus.$on('remove-filter', ($event) => {
+           this.tagFilter = this.tagFilter.filter(item => item != $event);
+         });
+         solid.auth.trackSession(session => {
+           if (!session) {
+             this.user = 'Not logged in';
+           }
+           else {
+             this.user = session.webId;
+           }
+         });
+       },
+       computed: {
+         // This provides filter functions that are updated when the data they evaluate changes.  Vue caches the output of these functions, only re-evaluating them if something changes.  These functions filter the lists when the user clicks on a tag by calculating the intersection of the sets associated with each tag
+         filteredDocumentList () {
+           if (this.tagFilter == "") {
+             return this.documentList;
+           }
+           else {
+             console.log('Filter: '+this.tagFilter);
+             let filterIndex = [];
+             for(var j=0, length=this.tagFilter.length; j < length; j++){
+               let tag = this.tagIndex[this.tagFilter[j]].docs;
+               if (j == 0) {
+                 filterIndex = tag;
+               }
+               else {
+                 filterIndex = filterIndex.filter(x => tag.includes(x));
+               };
+             };
+            return this.documentList.filter(document => filterIndex.includes(document.id));
+          };
+        },
+        filteredTagList () {
+          if (this.tagFilter == "") {
+            return this.tagList;
+          }
+          else {
+            let filterList = [];
+            for(var j=0, length=this.tagFilter.length; j < length; j++){
+              let tag = this.tagIndex[this.tagFilter[j]].tags;
+              if (j == 0) {
+                filterList = tag;
+              }
+              else {
+                filterList = filterList.filter(x => tag.includes(x));
+              };
+            };
+            return filterList;
+          }
+        }
+      }
+    });
+
+    // register Service Worker
+    window.addEventListener('load', e => {
+      registerServiceWorker();
+    });
+
+    // This function registers the Service Worker - the Service Worker caches the files used by the app locally, so that they are available offline
+    async function registerServiceWorker() {
+      if ('serviceWorker' in navigator) {
+        try {
+          await navigator.serviceWorker.register('https://neilrae.solid.community/public/apps/solid_links/serviceworker.js')
+          .then(function() {
+            console.log('Service Worker registered');
+          });
+        } catch (e) {
+          alert('Service Worker registration failed');
+        }
+      } else {
+        document.querySelector('.alert').removeAttribute('hidden');
+      }
+    }
+
+    // This function provides a Solid WebID login, which provides an authenticated user ID
+    async function popupLogin() {
+      let session = await solid.auth.currentSession();
+      let popupUri = 'https://solid.community/common/popup.html';
+      if (!session) {
+        session = await solid.auth.popupLogin({ popupUri });
+        alert(`Logged in as ${session.webId}`);
+      }
+    }
+    popupLogin();
+
+  </script>
+
+  </body>
+</html>
