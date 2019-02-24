@@ -16,7 +16,7 @@ Vue was chosen as a front end framework as it is relatively simple and easy to r
 Axios was chosen as a way to simply handle https requests asynchronously.
 Solid Auth was used to illustrate simple user login. This isn't used to do much more than display the user in the app at present. 
 
-It is normally good practice to write the code for individual components in separate files and to combine these later using a tool, such as webpack. This app is deliberately minimal and all the components are in a single file so that it can be read as one document and easily followed.  The only additions are the manifest.json and serviceworker.js files that enable it to be a Progressive Web App,as well as the underlying data.
+It is normally good practice to write the code for individual components in separate files and to combine these later using a tool, such as webpack. This app is deliberately minimal and all the components are in a single file so that it can be read as one document and easily followed.  The only additions are the manifest.json and serviceworker.js files that enable it to be a Progressive Web App, as well as the underlying data.
 
 The javascript makes use of ES6 functions and let/const variable declarations.  These are worth searching and reading up on.
 
@@ -24,7 +24,7 @@ The Solid user interface and API documentation are very much still works in prog
 
 However, using the Solside IDE (https://jeff-zucker.github.io/solid-ide/) lets you load and work with a much broader set of formats.  
 
-Writing to Solid is still being worked on to simplify the process - particularly to allow web developers to reuse their current knowledge, without facing a steep learning curve to understand RDF and ontologies.  To see how it works under the hood - the Solside file-client.js code is a good start: https://github.com/jeff-zucker/solid-ide/blob/master/solid-file-client.js
+Writing to Solid is still being worked on to simplify the process - particularly to allow web developers to reuse their current knowledge, without facing a steep learning curve to understand RDF and ontologies.  The Solid REST API spec is here: https://github.com/solid/solid-spec/blob/master/api-rest.md
 
 LDFlex (https://github.com/solid/query-ldflex) holds promise for allowing developers to simply work with Linked Data in a JSON-LD context - see the article here: https://ruben.verborgh.org/blog/2018/12/28/designing-a-linked-data-developer-experience/
 
