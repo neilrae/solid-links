@@ -12,7 +12,7 @@ The app has the following dependencies:
 * Axios: to simplify handling of https requests
 
 Material was chosen as it gives a familiar, responsive user experience and has a broad set of coherent components, icons, etc
-Vue was chosen as a front end framework as it is relatively simple and easy to reason with - its architecture is very similar to vanilla web components.
+Vue was chosen as a front end framework as it is relatively simple and easy to reason with - its architecture is similar to vanilla web components.
 Axios was chosen as a way to simply handle https requests asynchronously.
 Solid Auth was used to illustrate simple user login. This isn't used to do much more than display the user in the app at present. 
 
