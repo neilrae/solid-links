@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 
@@ -12,13 +13,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/7.0.0/normalize.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500" type="text/css">
-    <!-- Import javascript libraries - vue.js for component HTML templates and data binding, axios.js for simple Ajax calls, vue-mdc for Material Design components and solid-auth-client for user authentication -->
+    <!-- Import javascript libraries - vue.js for component HTML templates and data binding, axios.js for simple Ajax calls, -->
+    <!-- vue-mdc for Material Design components and solid-auth-client for user authentication -->
     <script src="https://unpkg.com/vue"></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <script src="https://unpkg.com/vue-mdc-adapter"></script>
     <script src="https://solid.github.io/solid-auth-client/dist/solid-auth-client.bundle.js"></script>
-    <script src="https://solid.github.io/query-ldflex/dist/solid-query-ldflex.bundle.js"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/solid-file-client/dist/browser/solid-file-client.bundle.js"></script>
 
     <!-- Basic CSS to decorate Material Design elements-->
     <style>
@@ -28,6 +29,7 @@
       .my-card { height: auto; width: 85%; margin: auto; margin-top: 10px; margin-bottom: 10px; }
       .form-field { margin: 10px; }
       .tag { vertical-align: middle; color: gray; }
+      .mdc-fab { position: fixed; bottom: 1rem; right: 1rem; }
     </style>
   </head>
 
@@ -79,6 +81,16 @@
             :key="item.id">
           </document-item>
 
+          <mdc-fab icon="add" @click="open=!open"></mdc-fab>
+
+          <mdc-dialog v-model="open" accept="Submit" cancel="Cancel" @accept="$bus.$emit('add')" >
+            <new-document
+              v-bind:document="newDocument"
+              v-bind:list="tagList"
+              v-bind:user="user">
+            </new-document>
+          </mdc-dialog>
+
           </main>
         </mdc-layout-app>
       </div>
@@ -121,6 +133,40 @@
       </mdc-drawer-item>
     </script>
 
+    <!-- Tag Menu Template ----------------------------------------------------------------------------->
+    <script type="text/x-template" id="tag-menu-template">
+      <mdc-menu-anchor>
+        <mdc-card-action-icon icon="add" @click="open=true" />
+        <mdc-menu v-model="open" @select="onSelect" @cancel="onCancel">
+          <mdc-menu-item v-for="item in list" :key="item">{{ item }}</mdc-menu-item>
+        </mdc-menu>
+      </mdc-menu-anchor>
+    </script>
+
+    <!-- New Document Template ----------------------------------------------------------------------------->
+    <script type="text/x-template" id="new-document-template">
+      <mdc-layout-grid>
+        <mdc-layout-cell span="10" align="middle">Suggestion from: {{ user }}</mdc-layout-cell>
+        <mdc-layout-cell span="12" align="middle">
+          <mdc-textfield class="form-field" fullwidth label="Title" box v-model="document.title" />
+        </mdc-layout-cell>
+        <mdc-layout-cell span="12" align="middle">
+          <mdc-textfield class="form-field" fullwidth label="URL" box v-model="document.url" />
+        </mdc-layout-cell>
+        <mdc-layout-cell span="12" align="middle">
+          <mdc-textfield class="form-field" fullwidth label="Description" box v-model="document.description" />
+        </mdc-layout-cell>
+        <mdc-layout-cell span="2" align="middle">Tags:</mdc-layout-cell>
+        <mdc-layout-cell span="3" align="middle" v-for="item in document.tags" :key="item">
+          {{ item }}
+          <a  @click="$bus.$emit('remove-tag', item)"><mdc-icon icon="cancel"></mdc-icon></a>
+        </mdc-layout-cell>
+        <mdc-layout-cell span="2" align="middle">
+          <tag-menu v-bind:list="list" v-bind:document="document"></tag-menu>
+        </mdc-layout-cell>
+      </mdc-layout-grid>
+    </script>
+
     <!-- Main Vue Script ----------------------------------------------------------------------------->
     <script>
 
@@ -159,6 +205,36 @@
         template: '#card-template'
       })
 
+      // This component provides a drop-down picker list of tags to add to a document
+      Vue.component('tag-menu', {
+        data() {
+          return { open: false }
+        },
+        props: [
+          'list',
+          'document'
+        ],
+        template: '#tag-menu-template',
+        methods: {
+          onSelect(selected) {
+            this.document.tags.push(this.list[selected.index]);
+          },
+          onCancel() {
+            console.log('menu cancelled');
+          }
+        }
+      })
+
+      // This component provides a view for creating a new document
+      Vue.component('new-document', {
+        props: [
+          'list',
+          'document',
+          'user'
+        ],
+        template: '#new-document-template'
+      })
+
       // Declares main Vue application - lists primary app data and methods
       var app = new Vue({
         el: '#app',
@@ -169,10 +245,13 @@
             tagIndex: {},
             tagFilter: [],
             open: false,
-            user: ''
+            user: '',
+            newDocument: {'user':'','title':'','url':'','description':'','tags':[ ]}
           }
         },
-        // On load, the app makes an https request to load two sets of data - the list of JSON documents that hold the individual links and metadata, and an object that provides an tag index to the JSON objects and other tags.  This is used to derive a simple array that is a list of the tags
+        // On load, the app makes an https request to load two sets of data - the list of JSON documents
+        // that hold the individual links and metadata, and an object that provides an tag index to the JSON objects
+        // and other tags.  This is used to derive a simple array that is a list of the tags
         mounted () {
           axios.get('https://neilrae.solid.community/public/apps/solid_links/docs.json').then(response => {
             this.documentList = response.data.rows;
@@ -187,41 +266,58 @@
             console.log(err);
           });
         },
-        // This updates primary app data when events occur
-       created () {
-         this.$bus.$on('add-filter', ($event) => {
-           this.tagFilter.push($event);
-         });
-         this.$bus.$on('remove-filter', ($event) => {
-           this.tagFilter = this.tagFilter.filter(item => item != $event);
-         });
-         solid.auth.trackSession(session => {
-           if (!session) {
-             this.user = 'Not logged in';
-           }
-           else {
-             this.user = session.webId;
-           }
-         });
-       },
-       computed: {
-         // This provides filter functions that are updated when the data they evaluate changes.  Vue caches the output of these functions, only re-evaluating them if something changes.  These functions filter the lists when the user clicks on a tag by calculating the intersection of the sets associated with each tag
-         filteredDocumentList () {
-           if (this.tagFilter == "") {
-             return this.documentList;
-           }
-           else {
-             console.log('Filter: '+this.tagFilter);
-             let filterIndex = [];
-             for(var j=0, length=this.tagFilter.length; j < length; j++){
-               let tag = this.tagIndex[this.tagFilter[j]].docs;
-               if (j == 0) {
-                 filterIndex = tag;
-               }
-               else {
-                 filterIndex = filterIndex.filter(x => tag.includes(x));
-               };
-             };
+        // This updates primary app data when events occur - e.g. clicking on a tag, logging in or clicking the submit button
+        created () {
+          this.$bus.$on('add-filter', ($event) => {
+            this.tagFilter.push($event);
+          });
+          this.$bus.$on('remove-filter', ($event) => {
+            this.tagFilter = this.tagFilter.filter(item => item != $event);
+          });
+          this.$bus.$on('remove-tag', ($event) => {
+            console.log('Remove tag: '+$event);
+            this.newDocument.tags = this.newDocument.tags.filter(item => item != $event);
+          });
+          this.$bus.$on('add', ($event) => {
+            let now = new Date();
+            let filename = now.toString();
+            filename = filename.replace(/\W/g, '')+'.json';
+            this.newDocument.user = this.user;
+            SolidFileClient.updateFile('https://neilrae.solid.community/public/apps/solid_links/newlinks/'+filename,
+              JSON.stringify(this.newDocument)).then( res=> {
+                alert(res);
+            }, err=>{alert("upload error : "+err)});
+          });
+          solid.auth.trackSession(session => {
+            if (!session) {
+              this.user = 'Not logged in';
+            }
+            else {
+              this.user = session.webId;
+            }
+          });
+        },
+        computed: {
+          // This provides filter functions that are updated when the data they evaluate changes.
+          // Vue caches the output of these functions, only re-evaluating them if something changes.
+          // These functions filter the lists of documents and tags when the user clicks on a tag
+          // by calculating the intersection of the sets associated with each selected tag
+          filteredDocumentList () {
+            if (this.tagFilter == "") {
+              return this.documentList;
+            }
+            else {
+              console.log('Filter: '+this.tagFilter);
+              let filterIndex = [];
+              for(var j=0, length=this.tagFilter.length; j < length; j++){
+                let tag = this.tagIndex[this.tagFilter[j]].docs;
+                if (j == 0) {
+                  filterIndex = tag;
+                }
+                else {
+                  filterIndex = filterIndex.filter(x => tag.includes(x));
+                };
+              };
             return this.documentList.filter(document => filterIndex.includes(document.id));
           };
         },
@@ -251,7 +347,8 @@
       registerServiceWorker();
     });
 
-    // This function registers the Service Worker - the Service Worker caches the files used by the app locally, so that they are available offline
+    // This function registers the Service Worker - the Service Worker caches the files used by the app locally,
+    // so that they are available offline
     async function registerServiceWorker() {
       if ('serviceWorker' in navigator) {
         try {
