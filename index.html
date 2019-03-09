@@ -1,9 +1,8 @@
-
 <!DOCTYPE html>
 <html>
 
   <head>
-    <title>Solid Links</title>
+    <title>Solid Links Dev</title>
     <!-- Setup for a mobile friendly progressive web app - service worker is registered towards the bottom of the document -->
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#6746EE"/>
@@ -20,6 +19,7 @@
     <script src="https://unpkg.com/vue-mdc-adapter"></script>
     <script src="https://solid.github.io/solid-auth-client/dist/solid-auth-client.bundle.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/solid-file-client/dist/browser/solid-file-client.bundle.js"></script>
+    <script src="https://solid.github.io/query-ldflex/dist/solid-query-ldflex.bundle.js"></script>
 
     <!-- Basic CSS to decorate Material Design elements-->
     <style>
@@ -83,7 +83,7 @@
 
           <mdc-fab icon="add" @click="open=!open"></mdc-fab>
 
-          <mdc-dialog v-model="open" accept="Submit" cancel="Cancel" @accept="$bus.$emit('add')" >
+          <mdc-dialog v-model="open" scrollable title="Suggestion Form (scroll down)" accept="Submit" cancel="Cancel" @accept="$bus.$emit('add')" >
             <new-document
               v-bind:document="newDocument"
               v-bind:list="tagList"
@@ -146,7 +146,7 @@
     <!-- New Document Template ----------------------------------------------------------------------------->
     <script type="text/x-template" id="new-document-template">
       <mdc-layout-grid>
-        <mdc-layout-cell span="10" align="middle">Suggestion from: {{ user }}</mdc-layout-cell>
+        <mdc-layout-cell span="10" align="middle">User: {{ user }}</mdc-layout-cell>
         <mdc-layout-cell span="12" align="middle">
           <mdc-textfield class="form-field" fullwidth label="Title" box v-model="document.title" />
         </mdc-layout-cell>
@@ -294,6 +294,7 @@
             }
             else {
               this.user = session.webId;
+              this.user = this.user.split('/')[2];
             }
           });
         },
@@ -370,10 +371,12 @@
       let popupUri = 'https://solid.community/common/popup.html';
       if (!session) {
         session = await solid.auth.popupLogin({ popupUri });
-        alert(`Logged in as ${session.webId}`);
+        const user = await solid.data.user;
+        // alert(`Logged in as ${session.webId}`);
+        alert(`Logged in as ${user.firstName}`);
       }
     }
-    popupLogin();
+    popupLogin()
 
   </script>
 
