@@ -6,13 +6,13 @@ It was a simple demonstration Progressive Web App, built to be hosted on a Solid
 
 The app had the following dependencies:
 
-* Vue.js: to provide simple html component templates, data binding and an event bus
-* Material Design Components for CSS, icons, fonts and Vue.js (v 2.x)
+* Vue.js (v 2.x): to provide simple html component templates, data binding and an event bus
+* Material Design Components for CSS, icons, fonts and Vue.js 
 * Solid-auth: for user ID management
 * Axios: to demonstrate simple handling of https requests
 * Solid-file-client: to demonstrate saving JSON objects to a pod
 
-Material was chosen as it gave a familiar, responsive user experience with a broad set of coherent components, icons, etc
+Material was chosen as it gave a familiar, responsive user experience with a broad set of coherent components, icons, etc. 
 Vue 2.x was chosen as a front end framework as it was relatively easy to reason with - its architecture is similar to vanilla web components.
 Axios was chosen as a way to handle https requests asynchronously.
 Solid Auth and Solid file client were used to illustrate standard Solid methods for user login and reading/writing to a pod.
