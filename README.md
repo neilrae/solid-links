@@ -2,7 +2,7 @@
 
 This was my response to learning about Tim Berners-Lee's Solid project: https://solidproject.org/
 
-It was a simple demonstration a Progressive Web App, built to be hosted on a Solid Pod.  It was not intended for production use and the goal of writing the app was to begin exploring the art of the possible with Solid at an early stage. 
+It was a simple demonstration Progressive Web App, built to be hosted on a Solid Pod.  It was not intended for production use and the goal of writing the app was to begin exploring the art of the possible with Solid at an early stage. 
 
 The app had the following dependencies:
 
